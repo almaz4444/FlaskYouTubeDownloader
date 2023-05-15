@@ -1,112 +1,98 @@
 import os
-from urllib.parse import quote
 from threading import Thread
-from time import sleep
 import requests
 
 from flask import Flask, render_template, request, send_file, redirect
 from pytube import YouTube
-from moviepy.editor import *
 
-from . import app, db
+from . import app
+from .models import Video
+from .util import *
 
 
 posters_get_url = 'https://i.ytimg.com/vi/{}/maxresdefault.jpg'
 
-resolutions = [
-    "720",
-    "480",
-    "360",
-    "240",
-    "144"
-]
 
 @app.route('/')
 def index():
-    return render_template('index.html', video_path='', resolutions=resolutions)
+    return render_template('index.html', video_path='')
 
 @app.route('/download/video', methods=['GET'])
 def download_video():
+    url = request.args.get("url")
     resolution = request.args.get("resolution")
-    name = request.args.get('name')
 
-    video = video_download(url, resolution)
-    path = video.get_file_path()
+    main_video_stream = YouTube(url).streams.filter(progressive=True)[-1]
+    is_main_video = main_video_stream.resolution == resolution
+    video = get_video(url, resolution, not is_main_video)
+    video_name = video.get_file_path().replace(os.getcwd(), '')[1::]
+    path = f"static\\videos\\({resolution}) {video_name}"
 
-    return send_file(f"static\\videos\\({resolution}) {path.replace(os.getcwd(), '')[1::]}", as_attachment=True)
+    return send_file(path, as_attachment=True)
     
+@app.route('/download/poster', methods=['GET'])
+def download_poster():
+    url = request.args.get("url")
+    poster = get_poster(get_video_id_by_url(url), YouTube(url).title)
+    poster_path = f"static\\{poster}"
 
-@app.route('/submit', methods=['POST'])
-def submit():
+    del_poster_th = Thread(target=remove_file_for, args=(5, f"app\\{poster_path}"))
+
+    return send_file(poster_path, as_attachment=True), del_poster_th.start()
+
+@app.route('/get_action', methods=['POST'])
+def get_action():
     url = request.form['url']
+    url = url.replace("?v=", "/")
+
     return redirect(f'/search?url={url}')
 
 @app.route('/search', methods=['GET'])
 def search_video():
     url = request.args.get('url')
     
-    video_path = get_static_path(download_videos(url), "720p")
+    videos = load_videos(url)
+    video_path = get_static_path(videos[0].path, videos[0].res)
     poster_path = get_poster(get_video_id_by_url(url), get_name_by_path(video_path))
     
-    return render_template('index.html', video_path=video_path, poster_path=poster_path, resolutions=resolutions, video_url=url)
+    return render_template('index.html', videos=videos, poster_path=poster_path)
 
-def download_videos(url):
+def load_videos(url):
     yt = YouTube(url)
-    path = f"{os.getcwd()}\\app\\static\\videos"
-    main_video_path = ''
-
-    for resolution in resolutions:
-        video = yt.streams.filter(res=f"{resolution}p").first()
-        video.download(output_path=path, filename_prefix=f"({video.resolution}) ")
-        if(resolution == "720"):
-            main_video_path = video.get_file_path()
     
-    return main_video_path
+    videos = []
 
-def get_static_path(file_path, resolution):
-    return f'videos/({resolution}) {file_path.replace(f"{os.getcwd()}", "")[1:-1]}4'.replace("\\", "/")
+    for stream in yt.streams.filter(progressive="True")[::-1]:
+        video = yt.streams.get_by_itag(stream.itag)
+        videos.append(Video(url,
+                            f'({video.resolution}) {yt.title}',
+                            video.get_file_path(),
+                            get_static_path(video.get_file_path(), video.resolution),
+                            video.resolution,
+                            video.mime_type.split("/")[-1], 
+                            human_format(video.filesize))
+                    )
 
+    main_video = get_video(url, videos[0].res, False)
+    videos[0].path = main_video.get_file_path()
+    videos[0].static_path = get_static_path(main_video.get_file_path(), main_video.resolution)
+
+    return videos
+
+def on_complete_download_function(stream, file_path):
+    Thread(target=remove_file_for, args=(5, file_path)).start()
     
+def get_video(url, resolution, is_deletable=True):
+    yt = YouTube(url, on_complete_callback=on_complete_download_function if is_deletable else None)
+
+    video = yt.streams.filter(res=resolution).first()
+    video.download(output_path="app/static/videos", filename_prefix=f"({video.resolution}) ")
+    
+    return video
+
+
 def get_poster(video_id, name):
-    fielname = name.replace('(720p) ', '').replace(".mp4", "")
-    with open(f"app\\static\\images\\{fielname}.jpg", "wb") as f:
+    fielname = shielding(name.replace('(720p) ', '').replace(".mp4", ""))
+    with open(f"app/static/images/{fielname}.jpg", "wb") as f:
         f.write(requests.get(posters_get_url.format(video_id)).content)
     return f'images/{fielname}.jpg'
-
-def get_video_id_by_url(url):
-    return url.split("/")[-1]
-
-def get_name_by_path(path):
-    return path.split("/")[-1]
-
-def resize_clip(clip, width=None, height=None):
-    if width is None and height is None:
-        return clip
-    new_size = None
-    if width is not None and height is not None:
-        new_size = (width, height)
-    elif width is not None:
-        new_size = (width, round(clip.size[1] * width / clip.size[0]))
-    else:
-        new_size = (round(clip.size[0] * height / clip.size[1]), height)
-
-    with open("log.txt", "w") as f:
-        f.write(f"{new_size[0]}, {new_size[1]}")
-
-    return clip.resize(new_size)
-
-def remove_file_for(time, path):
-    while True:
-        try:
-            sleep(time)
-            os.remove(path)
-            break
-        except:
-            pass
-
-def debug(log):
-    with open("log.txt", "w", encoding="utf-8") as f:
-        f.write(log)
-
-def shielding(string):
-    return string.replace(":", "_").replace("/", "_").replace("\\", "_").replace("\"", "_").replace("*", "_").replace("?", "_").replace("<", "_").replace(">", "_").replace("|", "_")

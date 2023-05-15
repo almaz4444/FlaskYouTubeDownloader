@@ -6,7 +6,7 @@ YouTube downloader
 <main class="main">
     <div class="insert">
         <h1 align="center">Скачать видео с YouTube</h1>
-        <form action="{{ url_for('submit') }}" method="post" class="form insert__form">
+        <form action="{{ url_for('get_action') }}" method="post" class="form insert__form">
             <div class="input-cntr form__input">
                 <input type="url" id="url" name="url" class="input input_insert" placeholder="Введите URL видео"
                     required>
@@ -15,31 +15,32 @@ YouTube downloader
                 <img src="{{ url_for('static', filename='images/button.svg') }}" alt="Image" height="20">
             </button>
         </form>
-        {% if video_path != '' %}
+        {% if videos %}
         <div class="result" style="display: block;">
             <div class="result__info-cntr">
                 <video class="result__img-parent" poster="{{ url_for('static', filename=poster_path) }}" width="637"
                     height="360" controls>
-                    <source src="{{ url_for('static', filename=video_path) }}"
+                    <source src="{{ url_for('static', filename=videos[0].static_path) }}"
                         type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
                 </video>
             </div>
             <div id="result-download-list" class="result__list-cntr2">
                 <form method="post" target="_blank">
                     <ul id="result-download-list" class="list">
-                        {% for resolution in resolutions %}
-                        <li class={% if resolution=="720" %} "list__item" {% else %} "list__item list__item_hidden" {%
+                        {% for video in videos %}
+                        <li class={% if video.res=="720p" %} "list__item" {% else %} "list__item list__item_hidden" {%
                             endif %} data-type="video" data-video-type="mp4" data-video-quality={{ resolution }}>
-                            <a href="http://127.0.0.1:5000/download/video?resolution={{ resolution }}p&url={{ video_path.split('/')[-1] }}"
+                            <a href="http://127.0.0.1:5000/download/video?resolution={{ video.res }}&url={{ video.url }}"
                                 class="list__item-link" target="_blank">
-                                <span class="list__item-info">Скачать {% if resolution == "720" %}<strong>HD</strong>{%
-                                    endif %} {{ resolution }}p</span>
-                                <span class="list__item-format">.mp4</span>
+                                <span class="list__item-info">Скачать {% if video.res == "720p" %}<strong>HD</strong>{%
+                                    endif %} {{ video.res }}</span>
+                                <span class="list__item-format">.{{ video.mime_type }}</span>
                             </a>
+                            <span class="list__item-filesize">{{ video.file_size }}</span>
                         </li>
                         {% endfor %}
                         <li class="list__item list__item-pvw" data-type="image">
-                            <a href="http://127.0.0.1:5000/download/poster?resolution={{ resolution }}p&url={{ video_path.split('/')[-1] }}"
+                            <a href="http://127.0.0.1:5000/download/poster?url={{ videos[0].url }}"
                                 class="list__item-link" target="_blank">
                                 <span class="list__item-info">Скачать обложку</span>
                             </a>

@@ -2779,7 +2779,7 @@ select.form-control-lg:not([size]):not([multiple]) {
 
 .btn:focus,
 .btn:hover {
-    text-decoration: none
+    text-decoration: none;
 }
 
 .btn.focus,
@@ -11621,6 +11621,11 @@ body {
 
 .video-container {
     margin-top: 30px;
+}
+
+.button__icon:hover {
+    text-decoration: none;
+    outline: none;
 }
 
 /*# sourceMappingURL=bootstrap.min.css.map */
