@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<style>
+  rect {
+    background: #df0000;
+    color: #fff;
+    padding: 10px;
+    border-radius: 15px;
+  }
+</style>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <title>{% block title %}{% endblock title %}</title>
+</head>
+
+<body>
+  <div id="wrapper">
+    {% include "navigation.html" %}
+    {% block content %}{% endblock content %}
+  </div>
+  <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+</body>
+
+</html>
