@@ -1,8 +1,9 @@
 import os
 from threading import Thread
 import requests
+import validators
 
-from flask import Flask, render_template, request, send_file, redirect
+from flask import Flask, render_template, request, send_file, redirect, flash
 from pytube import YouTube
 
 from . import app
@@ -15,7 +16,7 @@ posters_get_url = 'https://i.ytimg.com/vi/{}/maxresdefault.jpg'
 
 @app.route('/')
 def index():
-    return render_template('index.html', video_path='')
+    return render_template('index.html')
 
 @app.route('/download/video', methods=['GET'])
 def download_video():
@@ -51,19 +52,31 @@ def get_action():
 def search_video():
     url = request.args.get('url')
     
-    videos = load_videos(url)
-    video_path = get_static_path(videos[0].path, videos[0].res)
-    poster_path = get_poster(get_video_id_by_url(url), get_name_by_path(video_path))
+    videos, main_video_index = load_videos(url)
+    if videos:
+        video_path = videos[main_video_index].static_path
+        debug(video_path)
+        poster_path = get_poster(get_video_id_by_url(url), get_name_by_path(video_path))
+        
+        return render_template('index.html', videos=videos, poster_path=poster_path)
     
-    return render_template('index.html', videos=videos, poster_path=poster_path)
+    return render_template('index.html')
 
 def load_videos(url):
-    yt = YouTube(url)
+    try: 
+        yt = YouTube(url)
+    except:
+        return None, flash('Неверный URL', 'error')
     
     videos = []
+    main_video_index = 0
 
-    for stream in yt.streams.filter(progressive="True")[::-1]:
+    for i, stream in enumerate(yt.streams.filter(progressive=True)[::-1]):
         video = yt.streams.get_by_itag(stream.itag)
+
+        if i == 0:
+            video = get_video(url, video.resolution, False)
+
         videos.append(Video(url,
                             f'({video.resolution}) {yt.title}',
                             video.get_file_path(),
@@ -73,11 +86,7 @@ def load_videos(url):
                             human_format(video.filesize))
                     )
 
-    main_video = get_video(url, videos[0].res, False)
-    videos[0].path = main_video.get_file_path()
-    videos[0].static_path = get_static_path(main_video.get_file_path(), main_video.resolution)
-
-    return videos
+    return videos, main_video_index
 
 def on_complete_download_function(stream, file_path):
     Thread(target=remove_file_for, args=(5, file_path)).start()
@@ -86,7 +95,7 @@ def get_video(url, resolution, is_deletable=True):
     yt = YouTube(url, on_complete_callback=on_complete_download_function if is_deletable else None)
 
     video = yt.streams.filter(res=resolution).first()
-    video.download(output_path="app/static/videos", filename_prefix=f"({video.resolution}) ")
+    video.download(output_path="app\\static\\videos", filename_prefix=f"({video.resolution}) ")
     
     return video
 

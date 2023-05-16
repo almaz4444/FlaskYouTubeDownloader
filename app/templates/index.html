@@ -1,27 +1,32 @@
 {% extends "base.html" %}
-{% block title %}
-YouTube downloader
-{% endblock title %}
 {% block content %}
 <main class="main">
     <div class="insert">
-        <h1 align="center">Скачать видео с YouTube</h1>
+        <h1 class="text-center">Скачать видео с YouTube</h1>
         <form action="{{ url_for('get_action') }}" method="post" class="form insert__form">
             <div class="input-cntr form__input">
-                <input type="url" id="url" name="url" class="input input_insert" placeholder="Введите URL видео"
-                    required>
+                <input type="url" name="url" class="input input_insert" placeholder="Введите URL видео" required>
             </div>
             <button type="submit" class="button form__button">
                 <img src="{{ url_for('static', filename='images/button.svg') }}" alt="Image" height="20">
             </button>
+            <div class="messages">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <h6 class="alert alert-{{ category }}">{{ message }}</h6>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+            </div>
         </form>
         {% if videos %}
         <div class="result" style="display: block;">
             <div class="result__info-cntr">
                 <video class="result__img-parent" poster="{{ url_for('static', filename=poster_path) }}" width="637"
-                    height="360" controls>
-                    <source src="{{ url_for('static', filename=videos[0].static_path) }}"
-                        type='video/mp4; codecs="avc1.42E01E, mp4a.40.2"'>
+                    height="360" preload="auto" loop="loop" controls>
+                    <source src="{{ url_for('static', filename=videos[0].static_path) }}">
+                    <h6 class="text-center">Воспроизведение видео не поддерживается вашим браузером</h4>
                 </video>
             </div>
             <div id="result-download-list" class="result__list-cntr2">

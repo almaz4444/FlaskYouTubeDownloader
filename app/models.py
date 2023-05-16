@@ -7,3 +7,14 @@ class Video:
 		self.res = res
 		self.mime_type = mime_type
 		self.file_size = file_size
+
+	def __repr__(self):
+		return """
+URL: {}
+Name: {}
+Path: {}
+Static path: {}
+Resolution: {}
+Mime type: {}
+File size: {}
+""".format(self.url, self.name, self.path, self.static_path, self.res, self.mime_type, self.file_size)
