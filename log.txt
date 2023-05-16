@@ -1,1 +1,2 @@
-[WinError 3] Система неизвестна найти указанный путь: "static/images/Mahiro Oya
+[WinError 3] Система неизвестна найти указанный путь: "static/images/"
+
