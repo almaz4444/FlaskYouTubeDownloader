@@ -1,7 +1,6 @@
 import os
 from threading import Thread
 import requests
-import validators
 
 from flask import Flask, render_template, request, send_file, redirect, flash
 from pytube import YouTube
