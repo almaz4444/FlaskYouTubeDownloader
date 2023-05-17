@@ -2,7 +2,7 @@ import os
 from threading import Thread
 import requests
 
-from flask import Flask, render_template, request, send_file, redirect, flash
+from flask import Flask, render_template, request, send_file, redirect, flash, make_response
 from pytube import YouTube
 
 from . import app, db
@@ -43,14 +43,16 @@ def download_poster():
 @app.route('/search', methods=['GET'])
 def search_video():
     url = request.args.get('url')
+    is_no_load = request.args.get('IS_NO_LOAD')
     
-    videos, main_video_index = load_videos(url)
-    if videos:
-        video_path = videos[main_video_index].static_path
-        debug(video_path)
-        poster_path = get_poster(get_video_id_by_url(url), get_name_by_path(video_path))
-        
-        return render_template('index.html', videos=videos, poster_path=poster_path, comments=Comment.query.all())
+    if not is_no_load:
+        videos, main_video_index = load_videos(url)
+        if videos:
+            video_path = videos[main_video_index].static_path
+            debug(video_path)
+            poster_path = get_poster(get_video_id_by_url(url), get_name_by_path(video_path))
+            
+            return render_template('index.html', videos=videos, poster_path=poster_path, comments=Comment.query.all())
     
     return render_template('index.html', comments=Comment.query.all())
 
@@ -66,14 +68,18 @@ def send_comment():
         else:
             text = comment_text
 
-        comment = Comment()
-        comment.author = author
-        comment.text = ':'.join(text)
+        if text:
+            comment = Comment()
+            comment.author = author
+            comment.text = ':'.join(text)
 
-        db.session.add(comment)
-        db.session.commit()
+            db.session.add(comment)
+            db.session.commit()
 
-        return redirect(request.headers.get('Referer'))
+            response = make_response()
+            response.headers['IS_NO_LOAD'] = 'True'
+            
+            return redirect(request.headers.get('Referer'), Response=response)
     else:
         return render_template('index.html', comments=Comment.query.all())
     
