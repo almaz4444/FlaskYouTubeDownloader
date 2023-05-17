@@ -5,8 +5,8 @@ import requests
 from flask import Flask, render_template, request, send_file, redirect, flash
 from pytube import YouTube
 
-from . import app
-from .models import Video
+from . import app, db
+from .models import Video, Comment
 from .util import *
 
 
@@ -15,7 +15,7 @@ posters_get_url = 'https://i.ytimg.com/vi/{}/maxresdefault.jpg'
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', comments=Comment.query.all())
 
 @app.route('/download/video', methods=['GET'])
 def download_video():
@@ -40,13 +40,6 @@ def download_poster():
 
     return send_file(poster_path, as_attachment=True), del_poster_th.start()
 
-@app.route('/get_action', methods=['POST'])
-def get_action():
-    url = request.form['url']
-    url = url.replace("?v=", "/")
-
-    return redirect(f'/search?url={url}')
-
 @app.route('/search', methods=['GET'])
 def search_video():
     url = request.args.get('url')
@@ -57,13 +50,46 @@ def search_video():
         debug(video_path)
         poster_path = get_poster(get_video_id_by_url(url), get_name_by_path(video_path))
         
-        return render_template('index.html', videos=videos, poster_path=poster_path)
+        return render_template('index.html', videos=videos, poster_path=poster_path, comments=Comment.query.all())
     
-    return render_template('index.html')
+    return render_template('index.html', comments=Comment.query.all())
+
+@app.route('/send_comment', methods=['GET', 'POST'])
+def send_comment():
+    if request.method == 'POST':
+        comment_text = request.form['comment']
+
+        author = 'Anonymous'
+
+        if len(comment_text.split(':')) != 1:
+            author, *text = comment_text.split(':')
+        else:
+            text = comment_text
+
+        comment = Comment()
+        comment.author = author
+        comment.text = ':'.join(text)
+
+        db.session.add(comment)
+        db.session.commit()
+
+        return redirect(request.headers.get('Referer'))
+    else:
+        return render_template('index.html', comments=Comment.query.all())
+    
+
+@app.route('/get_action', methods=['POST'])
+def get_action():
+    url = request.form['url']
+    url = url.replace("?v=", "/")
+
+    return redirect(f'/search?url={url}')
 
 def load_videos(url):
     try: 
         yt = YouTube(url)
+        if yt.check_availability():
+            raise
     except:
         return None, flash('Неверный URL', 'error')
     
@@ -87,11 +113,11 @@ def load_videos(url):
 
     return videos, main_video_index
 
-def on_complete_download_function(stream, file_path):
+def complete_download_function(stream, file_path):
     Thread(target=remove_file_for, args=(5, file_path)).start()
     
 def get_video(url, resolution, is_deletable=True):
-    yt = YouTube(url, on_complete_callback=on_complete_download_function if is_deletable else None)
+    yt = YouTube(url, on_complete_callback=complete_download_function if is_deletable else None)
 
     video = yt.streams.filter(res=resolution).first()
     video.download(output_path="app\\static\\videos", filename_prefix=f"({video.resolution}) ")

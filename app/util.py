@@ -1,8 +1,6 @@
 import os
 from time import sleep
 
-# https://www.youtube.com/watch?v=KkIgpz26mjc
-
 def get_static_path(file_path, resolution):
     return f'videos/({resolution}) {file_path.replace(f"{os.getcwd()}", "")[1::]}'.replace("\\", "/")
     
