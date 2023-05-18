@@ -31,7 +31,7 @@
         <div class="result__info-cntr">
             <div class="result__video-parent">
                 <video id="result_video" class="result__video-link"
-                    poster="{{ url_for('static', filename=poster_path) }}" preload="auto" controls>
+                    poster="{{ url_for('static', filename=poster.path) }}" preload="auto" controls>
                     <source src="{{ url_for('static', filename=videos[0].static_path) }}">
                     <h6 class="text-center">Воспроизведение видео не поддерживается вашим браузером</h4>
                 </video>
@@ -41,8 +41,8 @@
             <form method="post" target="_blank">
                 <ul id="result-download-list" class="list">
                     {% for video in videos %}
-                    <li class={% if video.res=="720p" %} "list__item" {% else %} "list__item list__item_hidden" {% endif
-                        %} data-type="video" data-video-type="mp4" data-video-quality={{ resolution }}>
+                    <li class={% if video.res=="720p" %} "list__item" {% else %} "list__item list__item_yellow" {% endif
+                        %} data-type="video" data-video-type={{ video.mime_type }} data-video-quality={{ resolution }}>
                         <a href="http://127.0.0.1:5000/download/video?resolution={{ video.res }}&url={{ video.url }}"
                             class="list__item-link" target="_blank">
                             <span class="list__item-info">Скачать {% if video.res == "720p" %}<strong>HD</strong>{%
@@ -52,11 +52,19 @@
                         <span class="list__item-filesize">{{ video.file_size }}</span>
                     </li>
                     {% endfor %}
-                    <li class="list__item list__item-pvw" data-type="image">
-                        <a href="http://127.0.0.1:5000/download/poster?url={{ videos[0].url }}" class="list__item-link"
-                            target="_blank">
-                            <span class="list__item-info">Скачать обложку</span>
+                    <li class="list__item list__item-audio" data-type="image">
+                        <a href="/download/audio?url={{ videos[0].url }}" class="list__item-link" target="_blank">
+                            <span class="list__item-info">Скачать аудио</span>
+                            <span class="list__item-format">.mp3</span>
                         </a>
+                        <span class="list__item-filesize">0 Б</span>
+                    </li>
+                    <li class="list__item list__item-pvw" data-type="image">
+                        <a href="/download/poster?url={{ videos[0].url }}" class="list__item-link" target="_blank">
+                            <span class="list__item-info">Скачать обложку</span>
+                            <span class="list__item-format">.{{ poster.mime_type }}</span>
+                        </a>
+                        <span class="list__item-filesize">{{ poster.file_size }}</span>
                     </li>
                 </ul>
             </form>
@@ -64,6 +72,17 @@
     </div>
     {% endif %}
     <ul class="comments-block">
+        {% if answer_to_id and videos %}
+        <li class="answer">
+            <a class="button__icon" href="/search?url={{ videos[0].url }}">
+                <div class="comment-header">
+                    <p class="username purple">{{ comments[answer_to_id - 1].author }}</p>
+                    <p class="comment-time">{{ comments[answer_to_id - 1].date.strftime("%d %b %Y в %H:%M") }}</p>
+                </div>
+                <p class="comment-text">{{ comments[answer_to_id - 1].text }}</p>
+            </a>
+        </li>
+        {% endif %}
         <form action="send_comment" method="post" class="form insert__form">
             <div class="input-cntr form_comment__input">
                 <input type="text" class="input input_insert" name="comment"
@@ -73,20 +92,21 @@
                 <img src="static/images/icons/send.png" height="20">
             </button>
         </form>
-        {% for comment in comments %}
+        {% for comment in comments[::-1] %}
         <li class="comment">
             <div class="comment-header">
-                <p class="username">{{ comment.author }}</p>
+                <p class="username purple">{{ comment.author }}</p>
                 <p class="comment-time">{{ comment.date.strftime("%d %b %Y в %H:%M") }}</p>
             </div>
             <p class="comment-text">{{ comment.text }}</p>
-            <div class="comment-actions">
-                <button class="like-btn">
-                    <img class="like-img" src="static/images/icons/like-dis.png">
-                </button>
-                <p class="like-count black">{{ comment.likes_count }}</p>
+            <div class="comment-actions flex">
+                <a class="answer-btn" href="/answer?comment_id={{ comment.id }}">
+                    <span class="answer-text">Ответить</span>
+                </a>
             </div>
         </li>
+        {% else %}
+        <h4 class="text-center gray down">Комментариев пока что нет...</h4>
         {% endfor %}
     </ul>
 </main>

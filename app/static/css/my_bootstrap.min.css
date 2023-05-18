@@ -475,12 +475,12 @@ template {
     text-align: center
 }
 
-.list__item_hidden .list__item-link {
+.list__item_yellow .list__item-link {
     background-color: #f90;
     border-color: #f90
 }
 
-.list__item_hidden .list__item-link:hover {
+.list__item_yellow .list__item-link:hover {
     background-color: #d70;
     border-color: #d70
 }
@@ -572,7 +572,7 @@ template {
 }
 
 .list__item-pvw {
-    padding-top: 32px
+    padding-top: 2px
 }
 
 .list__item-pvw .list__item-link {
@@ -582,6 +582,21 @@ template {
 }
 
 .list__item-pvw .list__item-link:hover {
+    background-color: #4188d2;
+    border-color: #4188d2
+}
+
+.list__item-audio {
+    padding-top: 32px
+}
+
+.list__item-audio .list__item-link {
+    background-color: #689cd2;
+    border-color: #689cd2;
+    transition: background-color .2s, border-color .2s
+}
+
+.list__item-audio .list__item-link:hover {
     background-color: #4188d2;
     border-color: #4188d2
 }
@@ -809,9 +824,9 @@ body {
     height: 38px;
     padding: 0;
     margin: 0;
-    border: 1px solid blue;
+    border: 1px solid rgb(55, 255, 248);
     border-left: none;
-    background-color: blue;
+    background-color: rgb(55, 255, 248);
     -webkit-border-radius: 0 4px 4px 0;
     border-radius: 0 4px 4px 0;
     -webkit-transition: background-color .2s, border-color .2s;
@@ -820,8 +835,8 @@ body {
 }
 
 .form_comment__button:hover {
-    background-color: rgb(0, 0, 221);
-    border-color: rgb(0, 0, 221);
+    background-color: rgb(43, 214, 209);
+    border-color: rgb(43, 214, 209);
     cursor: pointer
 }
 
@@ -1784,6 +1799,16 @@ rect {
     margin-top: 10px;
 }
 
+.answer {
+    border: 5px solid rgb(68, 0, 255);
+    border-radius: 5px;
+    border-bottom: none !important;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
 .comment-header {
     display: flex;
     justify-content: space-between;
@@ -1791,23 +1816,19 @@ rect {
 
 .username {
     font-weight: bold;
-    margin-right: 10px;
     font-size: 15px;
+    margin: 0;
 }
 
 .comment-time {
     color: #999;
     font-size: 12px;
+    margin: 0;
 }
 
 .comment-text {
-    margin-bottom: 10px;
     font-size: 15px;
-}
-
-.like-count {
-    margin-top: 18px;
-    font-size: 15px;
+    margin: 0;
 }
 
 .comment-actions {
@@ -1815,38 +1836,26 @@ rect {
     align-items: center;
 }
 
-.reply-btn {
-    background-image: url();
-    border: 1px solid #ccc;
-    color: #333;
-    padding: 5px 10px;
-    margin-right: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-}
-
-.reply-btn:hover {
-    background-color: #ccc;
-    color: #fff;
-}
-
-.like-btn,
-.like-btn:hover,
-.like-btn:active,
-.like-btn:focus {
+.answer-btn,
+.answer-btn:hover,
+.answer-btn:active,
+.answer-btn:focus {
     border: none !important;
     color: none !important;
     background: none !important;
     outline: none !important;
+    margin: 0;
+    margin-top: 10px;
 }
 
-.like-img {
-    width: 20px;
-    height: 20px;
+.answer-text {
+    font-size: 11px;
 }
 
 .comments-block {
     padding: 0px;
+}
+
+.down {
+    padding-top: 20px;
 }
