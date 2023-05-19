@@ -1,0 +1,20 @@
+<div class="insert">
+    <h1 class="text-center">Скачать видео с YouTube</h1>
+    <form action="{{ url_for('get_action') }}" method="post" class="form insert__form">
+        <div class="input-cntr form_yt__input">
+            <input type="url" name="url" class="input input_insert" placeholder="Введите URL видео" required>
+        </div>
+        <button type="submit" class="button form_yt__button">
+            <img src="{{ url_for('static', filename='images/button.svg') }}" height="20">
+        </button>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="messages">
+            {% for category, message in messages %}
+            <h6 class="alert alert-{{ category }}">{{ message }}</h6>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+    </form>
+</div>

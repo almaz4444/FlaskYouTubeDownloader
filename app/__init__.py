@@ -11,3 +11,4 @@ from . import models, views # noqa
 db.create_all()
 
 # https://www.youtube.com/shorts/wPt_yqT1PAw
+# https://youtu.be/dl16e_mG6hg

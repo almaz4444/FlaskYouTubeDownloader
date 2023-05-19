@@ -1,0 +1,49 @@
+<ul class="comments-block">
+    {% if answered_id %}
+    <li class="answer">
+        <a class="button__icon" href="{{ request.path }}?url={{ request.args.get('url') }}">
+            <div class=" comment-header">
+                <p class="username purple">{{ comments[answered_id - 1].author }}</p>
+                <p class="comment-time">{{ comments[answered_id - 1].date.strftime("%H:%M:%d.%b.%Y") }}</p>
+            </div>
+            <p class="comment-text">{{ comments[answered_id - 1].text }}</p>
+        </a>
+    </li>
+    {% endif %}
+    <form action="send_comment" method="post" class="form insert__form">
+        <div class="input-cntr form_comment__input">
+            <input type="text" class="input input_insert" name="comment"
+                placeholder="Введите комментарий... {ник: текст}" value="Anonimus: " required>
+        </div>
+        <button type="submit" class="button form_comment__button">
+            <img src="static/images/send.png" height="20">
+        </button>
+    </form>
+    {% for comment in comments[::-1] %}
+    {% if not comment.is_answer %}
+    <li class="comment">
+        <div class="comment-header">
+            <p class="username purple">{{ comment.author }}</p>
+            <p class="comment-time">{{ comment.date.strftime("%H:%M:%d.%b.%Y") }}</p>
+        </div>
+        <p class="comment-text">{{ comment.text }}</p>
+        <div class="comment-actions flex">
+            <a class="answer-btn" href="/answer?url={{ request.args.get('url') }}&comment_id={{ comment.id }}">
+                <span class="answer-text">Ответить</span>
+            </a>
+        </div>
+        <ul class="comment-block">
+            {% for answer in comment.answered_messages_id %}
+            <div class="comment-header">
+                <p class="username purple">{{ answer.author }}</p>
+                <p class="comment-time">{{ answer.date.strftime("%H:%M:%d.%b.%Y") }}</p>
+            </div>
+            <p class="comment-text">{{ answer.text }}</p>
+            {% endfor %}
+        </ul>
+    </li>
+    {% endif %}
+    {% else %}
+    <h4 class="text-center gray down">Комментариев пока что нет...</h4>
+    {% endfor %}
+</ul>
