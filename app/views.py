@@ -1,7 +1,7 @@
 import os
 from threading import Thread
 import requests
-import smtpd
+import subprocess
 
 from flask import Flask, render_template, request, send_file, redirect, flash
 from pytube import YouTube, exceptions
@@ -12,6 +12,7 @@ from .util import *
 
 
 posters_get_url = 'https://i.ytimg.com/vi/{}/maxresdefault.jpg'
+TimeOfDeleteFile = 10
 
 
 @app.route('/')
@@ -26,9 +27,9 @@ def download_video():
     yt = YouTube(url)
     streams = yt.streaming_data['formats'][::-1]
     stream = list(filter(lambda data: data['qualityLabel'] == resolution, streams))[0]
-    video_path = get_video(stream, yt.title)
+    video_path = get_video(stream=stream, name=shielding(yt.title))
     
-    del_video_th = Thread(target=remove_file_for, args=(10, video_path))
+    del_video_th = Thread(target=remove_file_for, args=(TimeOfDeleteFile, video_path))
 
     return send_file(video_path.replace('app\\', ''), as_attachment=True), del_video_th.start()
 
@@ -37,17 +38,20 @@ def download_audio():
     url = request.args.get("url")
 
     yt = YouTube(url)
-    streams = yt.streaming_data['formats'][::-1]
-    audio = get_audio(get_video_id_by_url(url), YouTube(url).title)
+    stream = yt.streaming_data['formats'][-1]
+    audio_path = get_audio(stream, YouTube(url).title)
+    
+    del_audio_th = Thread(target=remove_file_for, args=(TimeOfDeleteFile, audio_path))
 
-    return send_file(poster_path, as_attachment=True)
+    return send_file(audio_path.replace('app\\', ''), download_name=f'{yt.title}.mp3', as_attachment=True), del_audio_th.start()
     
 @app.route('/download/poster', methods=['GET'])
 def download_poster():
     url = request.args.get("url")
 
     poster = get_poster(get_video_id_by_url(url), shielding(YouTube(url).title))
-    del_poster_th = Thread(target=remove_file_for, args=(10, f'app\\{poster.url}'))
+
+    del_poster_th = Thread(target=remove_file_for, args=(TimeOfDeleteFile, f'app\\{poster.url}'))
 
     return send_file(poster.url, as_attachment=True), del_poster_th.start()
 
@@ -59,12 +63,13 @@ def search_video():
     if not url:
         return redirect('/')
     
-    videos, poster = load_videos(url)
+    media = load_media(url)
     
-    if not videos:
+    if not media:
         return redirect('/')
     else:
-        return render_template('search.html', videos=videos, poster=poster, answered_id=int(answered_id), comments=Comment.query.all())
+        videos, poster, audio = media
+        return render_template('search.html', videos=videos, poster=poster, audio=audio, answered_id=int(answered_id), comments=Comment.query.all())
 
 @app.route('/send_comment', methods=['GET', 'POST'])
 def send_comment():
@@ -134,21 +139,8 @@ def get_action():
 
     return redirect(f'/search?url={url}')
 
-def load_videos(url):
-    try: 
-        yt = YouTube(url)
-        if yt.check_availability():
-            raise
-    except:
-        return None, flash('Неверный URL', 'error')
-    
+def load_videos(yt: YouTube, streams: list, url: str):
     videos = []
-
-    try:
-        streams = yt.streaming_data['formats'][::-1]
-    except exceptions.AgeRestrictedError:
-        return None, flash('Данное видео не доступно!', 'error')
-
     for i, stream in enumerate(streams):
         res = stream["qualityLabel"]
         mime_type = stream["mimeType"].split(";")[0].split("/")[-1]
@@ -163,8 +155,10 @@ def load_videos(url):
                             mime_type = mime_type,
                             file_size = human_format(video_filesize))
                     )
-    
 
+    return videos
+
+def load_poster(yt: YouTube, url: str):
     video_id = get_video_id_by_url(url)
     poster_url = posters_get_url.format(video_id)
     poster_head = requests.head(poster_url)
@@ -172,33 +166,65 @@ def load_videos(url):
 
     poster = Poster(poster_url, 'jpg', human_format(poster_filesize))
 
-    return videos, poster
+    return poster
+
+def load_audio(yt: YouTube):
+    head = requests.head(yt.streaming_data['adaptiveFormats'][-1]['url'])
+    filesize = int(head.headers.get('Content-Length', 0))
+
+    audio = Audio("mp3", human_format(filesize))
+
+    return audio
+
+def load_media(url):
+    try: 
+        yt = YouTube(url)
+        if yt.check_availability():
+            raise
+    except:
+        return flash('Неверный URL', 'error')
+
+    try:
+        streams = yt.streaming_data['formats'][::-1]
+    except exceptions.AgeRestrictedError:
+        return flash('Данное видео не доступно!', 'error')
+
+    videos = load_videos(yt, streams, url)
+    poster = load_poster(yt, url)
+    audio = load_audio(yt)
+
+    return videos, poster, audio
+
+def get_audio(stream: dict, name: str):
+    url = stream['url']
+    name = shielding(name).replace('&', '_').replace(' ', '_')
+    output_path = f"app\\static\\audios\\{name}.mp3"
+
+    video_file_path = get_video(name=f"{name}.mp4", url=url)
+    extract_audio(video_file_path, output_path)
+    os.remove(video_file_path)
+
+    return output_path
 
 def complete_download_function(stream, file_path):
     Thread(target=remove_file_for, args=(5, file_path)).start()
 
-def get_video(stream: dict, name: str):
-    mime_type = stream["mimeType"].split(";")[0].split("/")[-1]
-    path = f'app\\static\\videos\\({stream["qualityLabel"]}) {shielding(name)}.{mime_type}'
-
-    response = requests.get(stream['url'])
+def get_video(name: str, stream: dict = None, url: str = None):
+    path = f'app\\static\\videos\\{name}'
+    if not url:
+        url = stream['url']
+        mime_type = stream["mimeType"].split(";")[0].split("/")[-1]
+        path = f'app\\static\\videos\\({stream["qualityLabel"]}) {name}.{mime_type}'
 
     with open(path, "wb") as file:
+        response = requests.get(url)
         file.write(response.content)
 
     return path
 
-def get_audio(stream: dict, name: str, mime_type: str):
-    path = f'app\\static\\audio\\({stream["qualityLabel"]}) {shielding(name)}.{mime_type}'
-    filesize = 0
-
-    response = requests.get(stream['url'])
-
-    with open(path, "wb") as file:
-        file.write(response.content)
-        filesize = file.__sizeof__()
-
-    return Audio(path, mime_type, filesize)
+def extract_audio(video_file_path, audio_file_path):
+    command = f"ffmpeg -i {video_file_path} -vn -ab 128k -ar 44100 -y {audio_file_path}"
+    subprocess.run(command, shell=True, check=True)
 
 def get_poster(video_id, name):
     fielname = shielding(name.replace('(720p) ', '').replace(".mp4", ""))

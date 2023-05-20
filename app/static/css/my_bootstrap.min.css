@@ -515,7 +515,7 @@ template {
 .list__item-info {
     width: 100%;
     vertical-align: middle;
-    font-size: .9rem;
+    font-size: 1.4rem;
     color: #fff
 }
 
@@ -549,7 +549,7 @@ template {
     background: #fff;
     border-radius: 0 6px 6px 0;
     color: #282828;
-    font-size: .8rem;
+    font-size: 1.3rem;
     text-align: left;
     float: right
 }
@@ -560,7 +560,7 @@ template {
     vertical-align: top;
     text-align: right;
     line-height: 40px;
-    font-size: .8rem;
+    font-size: 1.0rem;
     background-color: #fff
 }
 
@@ -576,14 +576,14 @@ template {
 }
 
 .list__item-pvw .list__item-link {
-    background-color: #689cd2;
-    border-color: #689cd2;
+    background-color: #0099BA;
+    border-color: #0099BA;
     transition: background-color .2s, border-color .2s
 }
 
 .list__item-pvw .list__item-link:hover {
-    background-color: #4188d2;
-    border-color: #4188d2
+    background-color: #0078a7;
+    border-color: #0078a7
 }
 
 .list__item-audio {
@@ -591,14 +591,14 @@ template {
 }
 
 .list__item-audio .list__item-link {
-    background-color: #689cd2;
-    border-color: #689cd2;
+    background-color: #0099BA;
+    border-color: #0099BA;
     transition: background-color .2s, border-color .2s
 }
 
 .list__item-audio .list__item-link:hover {
-    background-color: #4188d2;
-    border-color: #4188d2
+    background-color: #0078a7;
+    border-color: #0078a7
 }
 
 .list__show-more {
@@ -769,7 +769,8 @@ body {
 
 .logo_header {
     position: relative;
-    padding: 20px
+    padding: 20px;
+    padding-bottom: 10px;
 }
 
 .logo__link {
@@ -824,9 +825,10 @@ body {
     height: 38px;
     padding: 0;
     margin: 0;
-    border: 1px solid rgb(55, 255, 248);
+
+    border: 1px solid rgb(255, 0, 0);
     border-left: none;
-    background-color: rgb(55, 255, 248);
+    background-color: rgb(255, 0, 0);
     -webkit-border-radius: 0 4px 4px 0;
     border-radius: 0 4px 4px 0;
     -webkit-transition: background-color .2s, border-color .2s;
@@ -835,8 +837,8 @@ body {
 }
 
 .form_comment__button:hover {
-    background-color: rgb(43, 214, 209);
-    border-color: rgb(43, 214, 209);
+    background-color: #d00;
+    border-color: #d00;
     cursor: pointer
 }
 
@@ -869,7 +871,7 @@ body {
 
 .input_insert {
     height: 36px;
-    font-size: 16px
+    font-size: 16px;
 }
 
 .input__cleaner:hover {
@@ -897,6 +899,10 @@ body {
 .insert,
 .insert__form {
     width: 100%
+}
+
+.insert__form_comment {
+    margin-right: 16%;
 }
 
 .link {
@@ -1233,7 +1239,7 @@ body>div.alertify-logs>div.show {
     }
 
     .form_comment__input {
-        width: 90%
+        width: 80%;
     }
 
     .form_yt__button {
@@ -1241,7 +1247,7 @@ body>div.alertify-logs>div.show {
     }
 
     .form_comment__button {
-        width: 10%
+        width: 19%
     }
 }
 
@@ -1256,15 +1262,11 @@ body>div.alertify-logs>div.show {
     }
 
     .form_yt__input {
-        width: 58%
+        width: 90%
     }
 
     .form_comment__input {
-        width: 95%
-    }
-
-    .form_yt__input {
-        width: 58%
+        width: 88%
     }
 
     .form_yt__button {
@@ -1272,7 +1274,7 @@ body>div.alertify-logs>div.show {
     }
 
     .form_comment__button {
-        width: 5%
+        width: 12%
     }
 
     .footer {

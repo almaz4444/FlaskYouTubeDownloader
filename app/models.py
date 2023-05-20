@@ -18,8 +18,7 @@ class Poster:
 		self.file_size = file_size
 
 class Audio:
-	def __init__(self, path, mime_type, file_size):
-		self.path = path
+	def __init__(self, mime_type, file_size):
 		self.mime_type = mime_type
 		self.file_size = file_size
 

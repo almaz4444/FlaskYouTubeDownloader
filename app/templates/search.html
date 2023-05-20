@@ -34,9 +34,9 @@
                     <li class="list__item list__item-audio" data-type="image">
                         <a href="/download/audio?url={{ videos[0].url }}" class="list__item-link" target="_blank">
                             <span class="list__item-info">Скачать аудио</span>
-                            <span class="list__item-format">.mp3</span>
+                            <span class="list__item-format">{{ audio.mime_type }}</span>
                         </a>
-                        <span class="list__item-filesize">0 Б</span>
+                        <span class="list__item-filesize">{{ audio.file_size }}</span>
                     </li>
                     <li class="list__item list__item-pvw" data-type="image">
                         <a href="/download/poster?url={{ videos[0].url }}" class="list__item-link" target="_blank">

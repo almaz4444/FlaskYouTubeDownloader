@@ -1,4 +1,5 @@
 <ul class="comments-block">
+    <h3 class="text-center">Отзовы о сайте ({{ comments|length }} шт.)</h3>
     {% if answered_id %}
     <li class="answer">
         <a class="button__icon" href="{{ request.path }}?url={{ request.args.get('url') }}">
@@ -10,13 +11,13 @@
         </a>
     </li>
     {% endif %}
-    <form action="send_comment" method="post" class="form insert__form">
+    <form action="send_comment" method="post" class="form insert__form_comment">
         <div class="input-cntr form_comment__input">
             <input type="text" class="input input_insert" name="comment"
                 placeholder="Введите комментарий... {ник: текст}" value="Anonimus: " required>
         </div>
         <button type="submit" class="button form_comment__button">
-            <img src="static/images/send.png" height="20">
+            <img src="static/images/button.svg" height="20" style="color: #0000;">
         </button>
     </form>
     {% for comment in comments[::-1] %}

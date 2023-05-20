@@ -4,5 +4,6 @@ __pycache__/
 log.txt
 app/static/videos/*
 app/static/images/*.jpg
+app/static/audios/*
 db.db
 main.py
