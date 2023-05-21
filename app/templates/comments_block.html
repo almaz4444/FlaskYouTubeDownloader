@@ -2,7 +2,7 @@
     <h3 class="text-center">Отзовы о сайте ({{ comments|length }} шт.)</h3>
     {% if answered_id %}
     <li class="answer">
-        <a class="button__icon" href="{{ request.path }}?url={{ request.args.get('url') }}">
+        <a class="button__icon" href="{{ request.path }}?id={{ request.args.get('id') }}">
             <div class=" comment-header">
                 <p class="username purple">{{ comments[answered_id - 1].author }}</p>
                 <p class="comment-time">{{ comments[answered_id - 1].date.strftime("%H:%M:%d.%b.%Y") }}</p>
@@ -29,7 +29,7 @@
         </div>
         <p class="comment-text">{{ comment.text }}</p>
         <div class="comment-actions flex">
-            <a class="answer-btn" href="/answer?url={{ request.args.get('url') }}&comment_id={{ comment.id }}">
+            <a class="answer-btn" href="/answer?id={{ request.args.get('id') }}&comment_id={{ comment.id }}">
                 <span class="answer-text">Ответить</span>
             </a>
         </div>

@@ -1,6 +1,8 @@
 import os
 from time import sleep
 
+import requests
+
 def get_static_path(file_path, resolution):
     return f'videos/({resolution}) {file_path.replace(f"{os.getcwd()}", "")[1::]}'.replace("\\", "/")
     
@@ -30,6 +32,14 @@ def remove_file_for(time, path):
 def debug(log):
     with open("log.txt", "w", encoding="utf-8") as f:
         f.write(str(log))
+
+def get_mime_type(stream):
+    return stream['mimeType'].split(";")[0].split("/")[-1]
+
+def get_filesize_by_url(url: str):
+    head = requests.head(url)
+    filesize = int(head.headers.get('Content-Length', 0))
+    return filesize
 
 def shielding(string):
     return string.replace(":", "_").replace("/", "_").replace("\\", "_").replace("\"", "_").replace("*", "_").replace("?", "_").replace("<", "_").replace(">", "_").replace("|", "_")

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Подготовка к скачиванию...</title>
+{% endblock title %}
+
+{% block content %}
+<div id="test">
+    <div class="progress" style="width: 50%; margin: 50px;">
+        <div class="progress-bar progress-bar-striped active" role="progressbar" v-bind:aria-valuenow="progress"
+            aria-valuemin="0" aria-valuemax="100" v-bind:style="'width: '+progress+'%'">
+            <span class="progress-bar-label" v-text="progress + '%'"></span>
+        </div>
+    </div>
+    <span v-text="message"></span>
+</div>
+
+<script>
+    let app = new Vue({
+        el: "#test",
+        data: {
+            progress: 0,
+            socket: null,
+        },
+        created: function () {
+            socket = io.connect("http://" + document.domain + ":" + location.port + "/test");
+            socket.on("progress", (msg) => {
+                this.progress = msg.text;
+            });
+        },
+    });
+</script>
+{% endblock content %}

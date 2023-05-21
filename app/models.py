@@ -3,17 +3,23 @@ from datetime import datetime
 from . import db
 
 class Video:
-	def __init__(self, url, raw_url, name, res, mime_type, file_size):
-		self.url = url
+	def __init__(self, id, raw_url, name, res, mime_type, file_size, itag, with_audio):
+		self.id = id
 		self.raw_url = raw_url
 		self.name = name
 		self.res = res
 		self.mime_type = mime_type
 		self.file_size = file_size
+		self.itag = itag
+		self.with_audio = with_audio
+
+		self.res_num = int(self.res.replace('p', '').replace('s', ''))
+		self.prefix = 'HD' if '720' in res else 'Full HD'
 
 class Poster:
-	def __init__(self, url, mime_type, file_size):
+	def __init__(self, mime_type, file_size, url = None, path = None):
 		self.url = url
+		self.path = path
 		self.mime_type = mime_type
 		self.file_size = file_size
 

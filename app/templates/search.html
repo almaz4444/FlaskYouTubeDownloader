@@ -11,7 +11,7 @@
         <div class="result__info-cntr">
             <div class="result__video-parent">
                 <video id="result_video" class="result__video-link" poster={{ poster.url }} preload="auto" controls>
-                    <source src={{ videos[0].raw_url }}>
+                    <source src={{ ((videos | selectattr("with_audio", "equalto" , true)) | list)[0].raw_url }}>
                     <h6 class="text-center">Воспроизведение видео не поддерживается вашим браузером</h4>
                 </video>
             </div>
@@ -20,11 +20,13 @@
             <form method="post" target="_blank">
                 <ul id="result-download-list" class="list">
                     {% for video in videos %}
-                    <li class={% if video.res=="720p" %} "list__item" {% else %} "list__item list__item_yellow" {% endif
-                        %} data-type="video" data-video-type={{ video.mime_type }} data-video-quality={{ resolution }}>
-                        <a href="http://127.0.0.1:5000/download/video?resolution={{ video.res }}&url={{ video.url }}"
+                    <li class={% if video.res_num>=720 %} "list__item" {% else
+                        %} "list__item list__item_yellow" {% endif %} data-type="video" data-video-type={{
+                        video.mime_type }} data-video-quality={{ resolution }}>
+                        <a href="http://127.0.0.1:5000/download/video?id={{ video.id }}&itag={{ video.itag }}"
                             class="list__item-link" target="_blank">
-                            <span class="list__item-info">Скачать {% if video.res == "720p" %}<strong>HD</strong>{%
+                            <span class="list__item-info">Скачать {% if video.res_num>=720 %}<strong>{{ video.prefix
+                                    }}</strong>{%
                                 endif %} {{ video.res }}</span>
                             <span class="list__item-format">.{{ video.mime_type }}</span>
                         </a>
@@ -32,14 +34,14 @@
                     </li>
                     {% endfor %}
                     <li class="list__item list__item-audio" data-type="image">
-                        <a href="/download/audio?url={{ videos[0].url }}" class="list__item-link" target="_blank">
+                        <a href="/download/audio?id={{ videos[0].id }}" class="list__item-link" target="_blank">
                             <span class="list__item-info">Скачать аудио</span>
-                            <span class="list__item-format">{{ audio.mime_type }}</span>
+                            <span class="list__item-format">.{{ audio.mime_type }}</span>
                         </a>
                         <span class="list__item-filesize">{{ audio.file_size }}</span>
                     </li>
                     <li class="list__item list__item-pvw" data-type="image">
-                        <a href="/download/poster?url={{ videos[0].url }}" class="list__item-link" target="_blank">
+                        <a href="/download/poster?id={{ videos[0].id }}" class="list__item-link" target="_blank">
                             <span class="list__item-info">Скачать обложку</span>
                             <span class="list__item-format">.{{ poster.mime_type }}</span>
                         </a>
