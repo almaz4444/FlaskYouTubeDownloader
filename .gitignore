@@ -2,8 +2,4 @@
 __pycache__/
 .env
 log.txt
-app/static/videos/*
-app/static/images/*.jpg
-app/static/audios/*
 db.db
-main.py
