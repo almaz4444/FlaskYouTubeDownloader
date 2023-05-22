@@ -1,13 +1,18 @@
 import os
 from threading import Thread
 import subprocess
+from tqdm import tqdm
+import smtplib
+import random
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import Flask, render_template, request, send_file, redirect, flash, current_app, _app_ctx_stack
+from flask_login import login_user, login_required, current_user, logout_user, login_required
 from pytube import YouTube, exceptions
 import requests
 
 from . import app, db
-from .models import Video, Poster, Audio, Comment, AnsweredCommentsId
+from .models import *
 from .util import *
 from .settings import *
 
@@ -116,17 +121,57 @@ def send_comment():
         return redirect(url)
     else:
         return redirect('/')
+    
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect('/')
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
     return render_template('login.html')
 
-@app.route('/sign_up', methods=["GET", "POST"])
-def sign_up():
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if not current_user.login:
+        return render_template('index.html')
+    return render_template('profile.html', login=current_user.login)
+    
+@app.route('/sign_in', methods=['POST'])
+def sign_in():
     login = request.form['login']
     password = request.form['password']
+    remember = True if request.form.get('remember') else False
 
-    return redirect('/')
+    user = User.query.filter_by(login=login).first()
+
+    if not user or not check_password_hash(user.password, password):
+        flash('Неверный логин или пароль!', 'error')
+        return redirect('/login') # if the user doesn't exist or password is wrong, reload the page
+
+    login_user(user, remember=remember)
+    return redirect('/profile')
+
+@app.route('/sign_up', methods=['POST'])
+def sign_up():
+    login = request.form['login']
+    email = request.form['email']
+    password = request.form['password']
+    
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        flash('Аккаунт с таким email уже существует!', 'error')
+        return redirect('/login')
+
+    new_user = User(email=email, password=generate_password_hash(password, method='sha256'), login=login)
+
+    db.session.add(new_user)
+    db.session.commit()
+    
+    return redirect(f'/login')
 
 @app.route('/answer', methods=['GET', 'POST'])
 def answer_comment():
@@ -161,20 +206,21 @@ def load_videos(yt: YouTube, adaptive_streams: list, normal_streams: list, id: s
     videos = []
     for i, stream in enumerate(adaptive_streams):
         mime_type = get_mime_type(stream)
-        if not 'webm' in mime_type:
-            res = stream["qualityLabel"]
+        # if not 'webm' in mime_type:
+        res = stream["qualityLabel"]
 
-            video_filesize = get_filesize_by_url(stream['url'])
+        video_filesize = get_filesize_by_url(stream['url'])
 
-            normal_stream_list = list(filter(lambda stream_data: stream_data['qualityLabel'] == res, normal_streams))
-            if len(normal_stream_list):
-                stream = normal_stream_list[0]
-                mime_type = get_mime_type(stream)
-            else:
-                audio_stream = get_best_audio(yt.streaming_data['adaptiveFormats'])
-                audio_filesize = get_filesize_by_url(audio_stream['url'])
-                video_filesize += audio_filesize
+        normal_stream_list = list(filter(lambda stream_data: stream_data['qualityLabel'] == res, normal_streams))
+        if len(normal_stream_list):
+            stream = normal_stream_list[0]
+            mime_type = get_mime_type(stream)
+        else:
+            audio_stream = get_best_audio(yt.streaming_data['adaptiveFormats'])
+            audio_filesize = get_filesize_by_url(audio_stream['url'])
+            video_filesize += audio_filesize
 
+        if(not videos or videos[-1].res != res or videos[-1].mime_type != mime_type):
             videos.append(Video(id = id,
                                 raw_url = stream['url'],
                                 name = f'({res}) {yt.title}',
@@ -252,41 +298,46 @@ def get_video(name: str, stream: dict = None, url: str = None, mime_type: str = 
         mime_type = mime_type if mime_type else get_mime_type(stream)
         path = f'app\\temp\\videos\\({stream["qualityLabel"]}) {name}.{mime_type}'
 
-    with open(path, "wb") as file:
-        response = requests.get(url)
-        file.write(response.content)
+    if not os.path.exists(path):
+        response = requests.get(url, stream=True)
+
+        total_size = int(response.headers.get('content-length', 0))
+        
+        with open(path, "wb") as file:
+            for data in tqdm(response.iter_content(chunk_size=chunk_size), total=total_size // chunk_size, unit='KB', unit_scale=True, desc=name):
+                file.write(data)
 
     return path
 
-def get_video_high_qality(yt: YouTube, stream: dict, name: str):
-    mime_type = get_mime_type(stream)
+
+def merge_video_and_audio(video_file, audio_file, output_file):
+    cmd = ['ffmpeg', '-i', video_file, '-i', audio_file, '-c', 'copy', '-map', '0:v:0', '-map', '1:a:0', '-shortest', '-strict', '-2', output_file]
+    subprocess.call(cmd)
+
+
+def get_video_high_qality(yt: YouTube, video_stream: dict, name: str):
+    audio_stream = get_best_audio(yt.streaming_data['adaptiveFormats'])
+    audio_stream['qualityLabel'] = '0p'
+    
+    video_mime_type = get_mime_type(video_stream)
+    audio_mime_type = get_mime_type(audio_stream)
+    
     video_name = f'(no audio) {name}'
+    audio_name = f'(source audio) {name}'
 
-    video_path = f'app\\temp\\videos\\({stream["qualityLabel"]}) {video_name}.{mime_type}'
-    audio_path = f'app\\temp\\audios\\{shielding(name).replace("&", "_").replace(" ", "_")}.mp3'
-    output_path = f"app\\temp\\videos\\({stream['qualityLabel']}) {name}.mp4"
+    video_path = f'app\\temp\\videos\\({video_stream["qualityLabel"]}) {video_name}.{video_mime_type}'
+    audio_path = f'app\\temp\\videos\\(0p) {audio_name}.{audio_mime_type}'
+    output_path = f"app\\temp\\videos\\({video_stream['qualityLabel']}) {name}.{video_mime_type}"
 
-    video_download_thread = Thread(target=get_video, kwargs={'name': video_name, 'stream': stream, 'mime_type': mime_type})
-    audio_download_thread = Thread(target=get_audio, args=(get_best_audio(yt.streaming_data['adaptiveFormats']), name))
+    video_download_thread = Thread(target=get_video, kwargs={'name': video_name, 'stream': video_stream, 'mime_type': video_mime_type})
+    audio_download_thread = Thread(target=get_video, kwargs={'name': audio_name, 'stream': audio_stream, 'mime_type': audio_mime_type})
 
     video_download_thread.start()
     audio_download_thread.start()
     video_download_thread.join()
     audio_download_thread.join()
 
-    # if mime_type == 'webm':
-    #     new_video_path = video_path.replace('.webm', '.mp4')
-        
-    #     command = ['ffmpeg', '-y', '-i', video_path, '-c:v', 'libx264', '-c:a', 'aac', "-pix_fmt", "yuv420p", new_video_path]
-    #     subprocess.call(command, shell=True)
-
-    #     # os.remove(video_path)
-    #     video_path = new_video_path
-
-    # print('-'*100)
-
-    command = ["ffmpeg", "-y", "-i", video_path, "-i", audio_path, "-c:v", "copy", "-c:a", "aac", "-strict", "experimental", "-pix_fmt", "yuv420p", output_path]
-    subprocess.call(command, shell=True)
+    merge_video_and_audio(video_path, audio_path, output_path)
 
     os.remove(video_path)
     os.remove(audio_path)

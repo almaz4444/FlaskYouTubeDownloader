@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from flask_login import UserMixin
+
 from . import db
 
 class Video:
@@ -14,7 +16,15 @@ class Video:
 		self.with_audio = with_audio
 
 		self.res_num = int(self.res.replace('p', '').replace('s', ''))
-		self.prefix = 'HD' if '720' in res else 'Full HD'
+
+		if '720' in res:
+			self.prefix = 'HD' 
+		elif '1080' in res:
+			self.prefix = 'Full HD'
+		elif '1440' in res:
+			self.prefix = '2K'
+		elif '2160' in res:
+			self.prefix = '4K'
 
 class Poster:
 	def __init__(self, mime_type, file_size, url = None, path = None):
@@ -47,3 +57,9 @@ class Comment(db.Model):
 	is_answer = db.Column(db.Boolean, default=False)
 
 	answered_messages_id = db.relationship("AnsweredCommentsId", back_populates="comment")
+ 
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), unique=True)
+    password = db.Column(db.String(100))
+    login = db.Column(db.String(1000), unique=True)

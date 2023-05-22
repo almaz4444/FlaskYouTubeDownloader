@@ -1,0 +1,13 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="messages">
+    {% for category, message in messages %}
+    {% if "Please log in" in message %}
+    {% set category = "info" %}
+    {% set message = "Войдите или зарегистрируйтесь перед открытием профиля." %}
+    {% endif %}
+    <h6 style="position: absolute" class="alert alert-{{ category }}">{{ message }}</h6>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}

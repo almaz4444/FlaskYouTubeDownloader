@@ -1,14 +1,25 @@
 <header class="header">
-  <div class="logo logo_header">
-    <h5>
-      <a class="button__icon" href="/">
-        <strong>
-          <font size="5" color="#000000" face="arial" onclick="index">Download</font>
-          <rect>
-            <font size="5" color="#ffffff" face="arial">Tube</font>
-          </rect>
-        </strong>
-      </a>
-    </h5>
-  </div>
+  <nav class="navbar navbar-expand-lg">
+    <div class="container-fluid projects-wrapper">
+      <div class="logo logo_header project-item">
+        <h5>
+          <a class="button__icon" href="/">
+            <strong>
+              <font size="5" color="#000000" face="arial" onclick="index">Download</font>
+              <rect>
+                <font size="5" color="#ffffff" face="arial">Tube</font>
+              </rect>
+            </strong>
+          </a>
+        </h5>
+      </div>
+      {% if not ('login' in request.path or 'profile' in request.path) %}
+      <div>
+        <h4 class="project-item">
+          <a href="/profile" class="text-center">Профиль</a>
+        </h4>
+      </div>
+      {% endif %}
+    </div>
+  </nav>
 </header>

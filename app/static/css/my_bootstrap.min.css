@@ -1713,12 +1713,13 @@ body {
 rect {
     background: #df0000;
     color: #fff;
-    padding: 10px;
+    padding: 13px;
     border-radius: 15px;
+    padding-bottom: 6px;
 }
 
 .messages {
-    padding: 20px;
+    padding-top: 20px;
     padding-left: 20%;
     padding-right: 20%;
     height: min-content;
@@ -1730,7 +1731,8 @@ rect {
     color: #f8f9fa;
     background-color: rgba(0, 0, 0, .03);
     padding: .75rem 1.25rem;
-    margin-bottom: 1rem;
+    padding-bottom: none;
+    margin-bottom: none;
 }
 
 .alert-info {
@@ -2054,4 +2056,72 @@ a:focus {
 
 .down {
     padding-top: 20px;
+}
+
+.hamburger {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #0E7318;
+    background: #fff;
+    padding: 5px;
+    border-radius: 8px;
+}
+
+.btn__hamb {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 4px;
+    background: #0E7318;
+    cursor: pointer;
+}
+
+.btn__hamb div {
+    width: 100%;
+    height: 100%;
+}
+
+.btn__hamb:before,
+.btn__hamb:after {
+    content: "";
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    background: #0E7318;
+}
+
+.btn__hamb:before {
+    top: -8px;
+}
+
+.btn__hamb:after {
+    top: 8px;
+}
+
+.projects-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    align-content: space-between;
+}
+
+.project-item {
+    width: 100%;
+}
+
+.menu-btn,
+.menu-btn:hover,
+.menu-btn:active,
+.menu-btn:focus {
+    border: none !important;
+    color: none !important;
+    background: none !important;
+    outline: none !important;
+    margin-top: 10px;
 }
